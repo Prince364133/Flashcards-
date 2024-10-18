@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Generator</title>
+    <style>
+        body {
+            font-family: , sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f4f8;
+        }
+        #flashcardForm, #responseInputContainer {
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #flashcardContainer {
+            display: none; /* Hide initially */
+            width: 450px; /* Adjust for 9:16 ratio */
+            max-width: 90%; /* Ensure responsiveness */
+            border: 2px solid #007BFF;
+            border-radius: 10px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Prevent overflow */
+            position: relative;
+            margin: 20px 0; /* Add margin for spacing */
+        }
+        #flashcardContent {
+            font-size: 24px;
+            text-align: center;
+            margin: 20px;
+            word-wrap: break-word; /* Allow breaking of long words */
+            color: black; /* Default color */
+        }
+        .answer {
+            color: blue; /* Answer color */
+        }
+        #buttonContainer {
+            display: none; /* Hide until flashcards are generated */
+            width: 200px; /* Match flashcard width */
+            text-align: center; /* Center buttons */
+        }
+        #showCount {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flashcard Generator</h1>
+    <div id="flashcardForm">
+        <input type="text" id="Publisher" placeholder="Publisher (optional)" />
+        <input type="number" id="Select" placeholder="no. of Flashcards" />
+         <select id="class">
+            <option value="1">Class 1</option>
+            <option value="2">Class 2</option>
+            <option value="3">Class 3</option>
+            <option value="4">Class 4</option>
+            <option value="5">Class 5</option>
+            <option value="6">Class 6</option>
+            <option value="7">Class 7</option>
+            <option value="8">Class 8</option>
+            <option value="9">Class 9</option>
+            <option value="10">Class 10</option>
+            <option value="11">Class 11</option>
+            <option value="12">Class 12</option>
+            
+            
+        </select>
+          <input type="text" id="subject" placeholder="Subject" />
+        
+        <select id="level">
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+        </select>
+        <select id="language">
+            <option value="English">English</option>
+            <option value="Hindi">Hindi</option>
+            <option value="Sanskrit">Sanskrit</option>
+            <option value="Urdu">Urdu</option>
+        </select>
+        <input type="number" id="chapterNumber" placeholder="Chapter Number" />
+        
+        <input type="text" id="chapterName" placeholder="Chapter Name" />
+         <input type="text" id="Specialcommand" placeholder="Special Command" />
+        <button onclick="startGeneration()">Generate Flashcards</button>
+    </div>
+
+    <div id="responseInputContainer" class="hidden">
+        <textarea id="responseInput" rows="5" placeholder="Paste ChatGPT response here..."></textarea>
+        <button onclick="generateFlashcards()">Create Flashcards</button>
+    </div>
+
+    <div id="flashcardContainer">
+        <div id="flashcardContent"></div>
+    </div>
+    
+    <div id="buttonContainer">
+        <button onclick="showNextFlashcard()">Next</button>
+        <button onclick="showPreviousFlashcard()">Previous</button>
+        
+         </div>
+
+    <script>
+        let flashcards = []; // Array to hold flashcards content
+        let currentFlashcardIndex = 0;
+        let answerTapCount = 0; // Count taps on show answer button
+
+        function startGeneration() {
+            const Publisher = document.getElementById("Publisher").value;
+            const Select = document.getElementById("Select").value;
+            const classLevel = document.getElementById("class").value;
+            const subject = document.getElementById("subject").value;
+           
+            const level = document.getElementById("level").value;
+            const language = document.getElementById("language").value;
+            const chapterNumber = document.getElementById("chapterNumber").value;
+            const Specialcommand = document.getElementById("Specialcommand").value;
+            const chapterName = document.getElementById("chapterName").value;
+
+            // Constructing prompt for ChatGPT with color specifications
+            let prompt = `Generate ${Select}, ${Publisher} flashcards for Class  ${classLevel}  ${subject}, level ${level}, in ${language}. Chapter Number: ${chapterNumber}, Chapter Name: ${chapterName},${Specialcommand},. Use the following format: Questions start with #, Answers start with *, ensure questions are black and answers are blue.`;
+            
+            // Copy prompt to clipboard
+            navigator.clipboard.writeText(prompt).then(() => {
+                alert("Prompt copied to clipboard. Redirecting to ChatGPT...");
+                window.open("https://chat.openai.com/", "_blank");
+                document.getElementById("responseInputContainer").classList.remove("hidden");
+                document.getElementById("flashcardForm").style.display = 'none'; // Hide the form
+            });
+        }
+
+        function generateFlashcards() {
+            const userResponse = document.getElementById("responseInput").value; // Get user response from input
+            flashcards = userResponse.split(/\n/).filter(card => card.trim() !== ''); // Split by new line and filter empty lines
+
+            // Further processing based on special characters
+            flashcards = flashcards.map(card => {
+                if (card.startsWith('#')) {
+                    return { type: 'question', content: card.substring(1).trim() };
+                } else if (card.startsWith('*')) {
+                    return { type: 'answer', content: card.substring(1).trim() };
+                } else if (card.startsWith('@')) {
+                    return { type: 'summary', content: card.substring(1).trim() };
+                }
+                return null; // Invalid card
+            }).filter(card => card !== null); // Remove invalid cards
+
+            // Reset index for displaying flashcards
+            currentFlashcardIndex = 0;
+            document.getElementById("flashcardContainer").style.display = 'flex'; // Show flashcard container
+            document.getElementById("responseInputContainer").style.display = 'none'; // Hide response input container
+            document.getElementById("buttonContainer").style.display = 'block'; // Show button container
+            displayFlashcard();
+        }
+
+        function displayFlashcard() {
+            const flashcardContent = document.getElementById("flashcardContent");
+            if (currentFlashcardIndex < flashcards.length) {
+                const flashcard = flashcards[currentFlashcardIndex];
+                if (flashcard.type === 'question') {
+                    flashcardContent.innerHTML = `<span style="color: black;">${flashcard.content}</span>`; // Display question in black
+                } else if (flashcard.type === 'answer') {
+                    flashcardContent.innerHTML = `<span class="answer">${flashcard.content}</span>`; // Display answer in blue
+                }
+                adjustFlashcardSize(); // Adjust size based on content
+            }
+        }
+
+        function adjustFlashcardSize() {
+            const flashcardContainer = document.getElementById("flashcardContainer");
+            const flashcardContent = document.getElementById("flashcardContent");
+            // Calculate and set the height based on content
+            flashcardContainer.style.height = flashcardContent.offsetHeight + 40 + 'px'; // Adjust height based on content
+            flashcardContainer.style.width = flashcardContent.offsetWidth + 40 + 'px'; // Adjust width based on content
+        }
+
+        function showNextFlashcard() {
+            if (currentFlashcardIndex < flashcards.length - 1) {
+                currentFlashcardIndex++;
+                displayFlashcard();
+                document.getElementById("tapCount").innerText = 0; // Reset tap count on new card
+                answerTapCount = 0; // Reset tap count// Reset tap count on new card
+                answerTapCount = 0; // Reset tap count for the new card
+            } else {
+                alert("You Finished all Flashcards || 😊 YAY !.");
+            }
+        }
+
+        function showPreviousFlashcard() {
+            if (currentFlashcardIndex > 0) {
+                currentFlashcardIndex--;
+                displayFlashcard();
+                document.getElementById("tapCount").innerText = 0; // Reset tap count on new card
+                answerTapCount = 0; // Reset tap count for the new card
+            } else {
+                alert("This is the first flashcard.");
+            }
+        }
+
+     
+
+        // Adjust the buttons display based on flashcard type
+        document.getElementById("buttonContainer").innerHTML += `
+           
+        `;
+    </script>
+</body>
+</html>
+<h1>BRDL</h1>
